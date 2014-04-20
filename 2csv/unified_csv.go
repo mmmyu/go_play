@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -10,13 +11,8 @@ import (
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s <input_file>.\n", os.Args[0])
-}
-
-func parseArgs(args []string) (string, string) {
-	if len(args) != 3 {
-	}
-	return args[1], args[2]
+	fmt.Fprintf(os.Stderr,
+		"Usage: %s [<flags>] <input_file>.\n", os.Args[0])
 }
 
 const (
@@ -40,11 +36,15 @@ func convertWFB(record []string) []string {
 		panic(err)
 	}
 	if amt >= 0.0 ||
-		strings.HasPrefix(record[4], "BILL PAY") ||
 		strings.Contains(record[4], " INVESTMENT") ||
 		strings.Contains(record[4], "ONLINE TRANSFER") {
 		return out
 	}
+	if strings.HasPrefix(record[4], "BILL PAY") &&
+		!strings.Contains(record[4], "RECURRING") {
+		return out
+	}
+
 	out[out_date] = convertDate(record[0])
 	out[out_desc] = record[3] + " " + record[4]
 	out[5] = strconv.FormatFloat(-amt, 'f', -1, 32)
@@ -104,25 +104,47 @@ func convertChase(record []string) []string {
 }
 
 const (
-	is_wfb = iota
-	is_amex = iota
-	is_cap1 = iota
+	is_wfb   = iota
+	is_amex  = iota
+	is_cap1  = iota
 	is_chase = iota
-	is_citi = iota
+	is_citi  = iota
 )
 
-func guessFileType(fname string) int {
+func guessFileType(fname string) (int, string) {
 	switch {
-	case strings.Contains(fname, "Checking1"): return is_wfb
-	case strings.Contains(fname, "ofx"): return is_amex
-	case strings.Contains(fname, "export"): return is_cap1
-	case strings.Contains(fname, "Activity"): return is_chase
-	case strings.Contains(fname, "xls"): return is_citi
-	default: panic("Unknown file name type")
+	case strings.Contains(fname, "Checking1"):
+		fmt.Fprintf(os.Stderr, "Format=WFB\n")
+		return is_wfb, "wfb"
+	case strings.Contains(fname, "ofx"):
+		fmt.Fprintf(os.Stderr, "Format=Amex\n")
+		return is_amex, "amex"
+	case strings.Contains(fname, "export"):
+		fmt.Fprintf(os.Stderr, "Format=Capital1\n")
+		return is_cap1, "cap1"
+	case strings.Contains(fname, "Activity"):
+		fmt.Fprintf(os.Stderr, "Format=Chase\n")
+		return is_chase, "chase"
+	case strings.Contains(fname, "xls"):
+		fmt.Fprintf(os.Stderr, "Format=Citi\n")
+		return is_citi, "citi"
+	default:
+		panic("Unknown file name type")
 	}
 }
 
-func convert(ftype int, fin string) {
+func ftypeToEnum(ft string) (int, string) {
+	switch ft {
+	case "wfb": return is_wfb, ft
+	case "amex": return is_amex, ft
+	case "cap1": return is_cap1, ft
+	case "chase": return is_chase, ft
+	case "citi": return is_citi, ft
+	default: panic("Unknown file type " + ft)
+	}
+}
+
+func convert(ftype int, fin string, out_file *os.File) {
 	fi, err := os.Open(fin)
 	if err != nil {
 		panic(err)
@@ -159,19 +181,44 @@ func convert(ftype int, fin string) {
 		}
 	}
 	//	fo, err := os.Create(fout)
-	writer := csv.NewWriter(os.Stdout)
+	writer := csv.NewWriter(out_file)
 	defer writer.Flush()
 	for _, r := range output_records {
 		writer.Write(r)
 	}
 }
 
+func getOutputFile(ftype int, ftypename string) *os.File {
+	fname := ftypename + "_" + time.Now().Format("20060102") + ".csv"
+	f, err := os.Create(fname)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
 // Parses banks checking activity csv file
 func main() {
-	if len(os.Args) != 2 {
+	flag_output := flag.Bool("o", false, "Writes to a csv file.")
+	flag_type := flag.String("t", "auto", "Specifies file type.")
+	flag.Parse()
+	if flag.NArg() != 1 {
+		fmt.Println("narg=", flag.NArg())
 		usage()
 		return
 	}
-	fname := os.Args[1]
-	convert(guessFileType(fname), fname)
+	fname := flag.Arg(0)
+	var ftype int
+	var ftypename string
+	if *flag_type == "auto" {
+		ftype, ftypename = guessFileType(fname)
+	} else {
+		ftype, ftypename = ftypeToEnum(*flag_type)
+	}
+	out_file := os.Stdout
+	if *flag_output {
+		out_file = getOutputFile(ftype, ftypename)
+		defer out_file.Close()
+	}
+	convert(ftype, fname, out_file)
 }
