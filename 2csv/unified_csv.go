@@ -61,14 +61,14 @@ var jump_table = [out_num_fields]func(r []string){
 	classify_gas,
 	nil, // car
 	classify_online,
-	nil, // drugs
+	classify_drugs,
 	classify_school,
 	nil, // kids
 	classify_target,
 	nil, // walmart
 	classify_costco,
 	nil, // store
-	nil, // fashion
+	classify_fashion,
 	classify_home_improv,
 	classify_electronics,
 	nil, // doctors
@@ -92,6 +92,12 @@ func has_string(a, b string) bool {
 		strings.ToLower(b))
 }
 
+func classify_fashion(r []string) {
+	if has_string(r[out_desc], "FOREVER 21") {
+		r[out_fashion] = r[out_amount]
+	}
+}
+
 func classify_mortgage(r []string) {
 	if has_string(r[out_desc], "PROVIDENT FUND") ||
 		has_string(r[out_desc], "CALIBER") {
@@ -106,9 +112,16 @@ func classify_school(r []string) {
 	}
 }
 
+func classify_drugs(r []string) {
+	if has_string(r[out_desc], "CVS PHARMACY") {
+		r[out_drugs] = r[out_amount]
+	}
+}
+
 func classify_hoa(r []string) {
 	if has_string(r[out_desc], "PARC METRO") {
-		r[out_hoa] = r[out_amount]
+		r[out_hoa] = r[out_cash]
+		r[out_cash] = ""
 	}
 }
 
@@ -143,6 +156,11 @@ func classify_utilities(r []string) {
 		has_string(r[out_desc], "COMCAST") {
 		r[out_utilities] = r[out_amount]
 	}
+	if has_string(r[out_desc], "PGANDE") {
+		r[out_utilities] = r[out_cash]
+		r[out_cash] = ""
+	}
+
 }
 
 func classify_online(r []string) {
@@ -180,11 +198,12 @@ func classify_payment(r []string) {
 
 func classify_food(r []string) {
 	if has_string(r[out_desc], "99 RANCH") ||
-		has_string(r[out_desc], "SAFEWAY") ||
 		has_string(r[out_desc], "FOOD EXPRESS") ||
-		has_string(r[out_desc], "WHOLE FOODS") ||
+		has_string(r[out_desc], "MARINA") ||
+		has_string(r[out_desc], "RALEY'S") ||
+		has_string(r[out_desc], "SAFEWAY") ||
 		has_string(r[out_desc], "TRADER JOE") ||
-		has_string(r[out_desc], "RALEY'S") {
+		has_string(r[out_desc], "WHOLE FOODS") {
 		r[out_food] = r[out_amount]
 	}
 }
