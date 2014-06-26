@@ -65,7 +65,7 @@ var jump_table = [out_num_fields]func(r []string){
 	classify_school,
 	nil, // kids
 	classify_target,
-	nil, // walmart
+	classify_walmart,
 	classify_costco,
 	nil, // store
 	classify_fashion,
@@ -121,6 +121,13 @@ func classify_drugs(r []string) {
 func classify_hoa(r []string) {
 	if has_string(r[out_desc], "PARC METRO") {
 		r[out_hoa] = r[out_cash]
+		r[out_cash] = ""
+	}
+}
+
+func classify_walmart(r []string) {
+	if has_string(r[out_desc], "WAL-MART") {
+		r[out_walmart] = r[out_cash]
 		r[out_cash] = ""
 	}
 }
