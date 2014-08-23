@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -75,7 +76,8 @@ var jump_table = [out_num_fields]func(r []string){
 	classify_utilities,
 	classify_hoa,
 	nil, // misc
-	nil, // travel/sports
+	classify_travel_sports,
+	classify_tax_insurance,
 	classify_mortgage,
 }
 
@@ -93,15 +95,23 @@ func has_string(a, b string) bool {
 }
 
 func classify_fashion(r []string) {
-	if has_string(r[out_desc], "FOREVER 21") {
+	if has_string(r[out_desc], "FOREVER 21") ||
+		has_string(r[out_desc], "6PM.COM") ||
+		has_string(r[out_desc], "VICTORIA'S") {
 		r[out_fashion] = r[out_amount]
+	}
+}
+
+func classify_tax_insurance(r []string) {
+	if has_string(r[out_desc], "CSAA Auto") {
+		r[out_tax] = r[out_amount]
 	}
 }
 
 func classify_mortgage(r []string) {
 	if has_string(r[out_desc], "PROVIDENT FUND") ||
 		has_string(r[out_desc], "CALIBER") {
-		r[out_school] = r[out_amount]
+		r[out_mortgage] = r[out_amount]
 	}
 }
 
@@ -181,7 +191,9 @@ func classify_gas(r []string) {
 		has_string(r[out_desc], "Costco gas") ||
 		has_string(r[out_desc], "Union 76") ||
 		has_string(r[out_desc], "76 fuel") ||
-		has_string(r[out_desc], "Shell Oil") {
+		has_string(r[out_desc], "SAFEWAY FUEL") ||
+		has_string(r[out_desc], "Shell Oil") ||
+		has_string(r[out_desc], "valero") {
 		r[out_gas] = r[out_amount]
 	}
 }
@@ -189,7 +201,10 @@ func classify_gas(r []string) {
 func classify_restaurant(r []string) {
 	if has_string(r[out_desc], "Starbucks") ||
 		has_string(r[out_desc], "Tully") ||
-		has_string(r[out_desc], "Peet") {
+		has_string(r[out_desc], "Peet") ||
+		has_string(r[out_desc], "SUBWAY") ||
+		has_string(r[out_desc], "JUST KOI") ||
+		has_string(r[out_desc], "CAFE") {
 		r[out_restaurant] = r[out_amount]
 	}
 }
@@ -208,10 +223,19 @@ func classify_food(r []string) {
 		has_string(r[out_desc], "FOOD EXPRESS") ||
 		has_string(r[out_desc], "MARINA") ||
 		has_string(r[out_desc], "RALEY'S") ||
-		has_string(r[out_desc], "SAFEWAY") ||
 		has_string(r[out_desc], "TRADER JOE") ||
 		has_string(r[out_desc], "WHOLE FOODS") {
 		r[out_food] = r[out_amount]
+	}
+}
+
+func classify_travel_sports(r []string) {
+	is_rei, _ := regexp.MatchString("^REI ", r[out_desc])
+	if has_string(r[out_desc], "SPORTS AUTH") ||
+		has_string(r[out_desc], "HOTELS.COM") ||
+		is_rei ||
+		has_string(r[out_desc], "SPORT CHALET") {
+		r[out_travel] = r[out_amount]
 	}
 }
 
@@ -234,15 +258,16 @@ func convertWFB(record []string) []string {
 		strings.Contains(record[4], "ONLINE TRANSFER") {
 		return out
 	}
-	if strings.HasPrefix(record[4], "BILL PAY") &&
-		!strings.Contains(record[4], "RECURRING") {
-		return out
+	if !strings.HasPrefix(record[4], "BILL PAY") ||
+		strings.Contains(record[4], "RECURRING") ||
+		strings.Contains(record[4], "LIFEINS") ||
+		strings.Contains(record[4], "CSAA") ||
+		strings.Contains(record[4], "AAA") {
+		out[out_date] = convertDate(record[0])
+		out[out_desc] = record[3] + " " + record[4]
+		out[5] = strconv.FormatFloat(-amt, 'f', -1, 32)
+		out[6] = strconv.FormatFloat(amt, 'f', -1, 32)
 	}
-
-	out[out_date] = convertDate(record[0])
-	out[out_desc] = record[3] + " " + record[4]
-	out[5] = strconv.FormatFloat(-amt, 'f', -1, 32)
-	out[6] = strconv.FormatFloat(amt, 'f', -1, 32)
 	return out
 }
 
