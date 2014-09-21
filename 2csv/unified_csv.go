@@ -84,7 +84,10 @@ var jump_table = [out_num_fields]func(r []string){
 func convertDate(d string) string {
 	t, err := time.Parse("1/2/2006", d)
 	if err != nil {
-		return ""
+		t, err = time.Parse("2006-1-2", d)
+		if err != nil {
+			return ""
+		}
 	}
 	return t.Format("2006-01-02")
 }
@@ -331,6 +334,7 @@ const (
 )
 
 func guessFileType(fname string) (int, string) {
+	var regex_citi = regexp.MustCompile("[0-9]{4}-[0-9]{2}-[0-9]{2}.csv")
 	switch {
 	case strings.Contains(fname, "Checking1"):
 		fmt.Fprintf(os.Stderr, "Format=WFB\n")
@@ -344,7 +348,7 @@ func guessFileType(fname string) (int, string) {
 	case strings.Contains(fname, "Activity"):
 		fmt.Fprintf(os.Stderr, "Format=Chase\n")
 		return is_chase, "chase"
-	case strings.Contains(fname, "xls"):
+	case regex_citi.MatchString(fname):
 		fmt.Fprintf(os.Stderr, "Format=Citi\n")
 		return is_citi, "citi"
 	default:
@@ -376,10 +380,6 @@ func convert(ftype int, fin string, out_file *os.File) {
 	}
 	defer fi.Close()
 	reader := csv.NewReader(fi)
-	switch ftype {
-	case is_citi:
-		reader.Comma = '\t'
-	}
 	output_records := make([][]string, 0)
 	for {
 		record, err := reader.Read()
