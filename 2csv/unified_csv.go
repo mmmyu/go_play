@@ -334,7 +334,7 @@ const (
 )
 
 func guessFileType(fname string) (int, string) {
-	var regex_citi = regexp.MustCompile("[0-9]{4}-[0-9]{2}-[0-9]{2}.csv")
+	var regex_citi = regexp.MustCompile("[0-9]{2}-[0-9]{2}-[0-9]{4}.csv")
 	switch {
 	case strings.Contains(fname, "Checking1"):
 		fmt.Fprintf(os.Stderr, "Format=WFB\n")
