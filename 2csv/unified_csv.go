@@ -120,7 +120,8 @@ func classify_mortgage(r []string) {
 
 func classify_school(r []string) {
 	if has_string(r[out_desc], "TAEKWON") ||
-		has_string(r[out_desc], "TIFFANY'S DANCE") {
+		has_string(r[out_desc], "TIFFANY'S DANCE") ||
+		has_string(r[out_desc], "HAPPY FISH") {
 		r[out_school] = r[out_amount]
 	}
 }
@@ -173,7 +174,8 @@ func classify_utilities(r []string) {
 	if has_string(r[out_desc], "AT&T*BILL") ||
 		has_string(r[out_desc], "OOMAINC") ||
 		has_string(r[out_desc], "PLEASANTON WATER") ||
-		has_string(r[out_desc], "COMCAST") {
+		has_string(r[out_desc], "COMCAST") ||
+		has_string(r[out_desc], "T-MOBILE") {
 		r[out_utilities] = r[out_amount]
 	}
 	if has_string(r[out_desc], "PGANDE") {
@@ -207,7 +209,8 @@ func classify_restaurant(r []string) {
 		has_string(r[out_desc], "Peet") ||
 		has_string(r[out_desc], "SUBWAY") ||
 		has_string(r[out_desc], "JUST KOI") ||
-		has_string(r[out_desc], "CAFE") {
+		has_string(r[out_desc], "CAFE") ||
+		has_string(r[out_desc], "GOLDEN SAND HARBOR") {
 		r[out_restaurant] = r[out_amount]
 	}
 }
@@ -227,7 +230,8 @@ func classify_food(r []string) {
 		has_string(r[out_desc], "MARINA") ||
 		has_string(r[out_desc], "RALEY'S") ||
 		has_string(r[out_desc], "TRADER JOE") ||
-		has_string(r[out_desc], "WHOLE FOODS") {
+		has_string(r[out_desc], "WHOLE FOODS") ||
+		has_string(r[out_desc], "KEE WAH BAKERY") {
 		r[out_food] = r[out_amount]
 	}
 }
@@ -259,6 +263,13 @@ func convertWFB(record []string) []string {
 	if amt >= 0.0 ||
 		strings.Contains(record[4], " INVESTMENT") ||
 		strings.Contains(record[4], "ONLINE TRANSFER") {
+		return out
+	}
+	// Skip credit card autopay entries
+	if strings.HasPrefix(record[4], "CHASE AUTOPAY") ||
+		strings.HasPrefix(record[4], "AMERICAN EXPRESS ACH PMT") ||
+		strings.HasPrefix(record[4], "CAPITAL ONE CRCARDPMT") ||
+		strings.HasPrefix(record[4], "CITI AUTO PAYMENT") {
 		return out
 	}
 	if !strings.HasPrefix(record[4], "BILL PAY") ||
@@ -415,7 +426,7 @@ func convert(ftype int, fin string, out_file *os.File) {
 }
 
 func getOutputFile(ftype int, ftypename string) *os.File {
-	fname := ftypename + "_" + time.Now().Format("20060102") + ".csv"
+	fname := ftypename + "_" + time.Now().Format("20060102150405") + ".csv"
 	f, err := os.Create(fname)
 	if err != nil {
 		panic(err)
