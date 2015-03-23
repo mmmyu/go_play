@@ -285,6 +285,14 @@ func convertWFB(record []string) []string {
 	return out
 }
 
+func convertWFBCard(record []string) []string {
+	out := make([]string, out_num_fields)
+	out[out_date] = convertDate(record[0])
+	out[out_desc] = record[4]
+	out[out_amount] = record[1]
+	return out
+}
+
 func convertAmex(record []string) []string {
 	out := make([]string, out_num_fields)
 	out[out_date] = convertDate(record[0])
@@ -342,6 +350,7 @@ const (
 	is_cap1  = iota
 	is_chase = iota
 	is_citi  = iota
+	is_wfbc  = iota
 )
 
 func guessFileType(fname string) (int, string) {
@@ -350,6 +359,9 @@ func guessFileType(fname string) (int, string) {
 	case strings.Contains(fname, "Checking1"):
 		fmt.Fprintf(os.Stderr, "Format=WFB\n")
 		return is_wfb, "wfb"
+	case strings.Contains(fname, "CreditCard"):
+		fmt.Fprintf(os.Stderr, "Format=WFBC\n")
+		return is_wfbc, "wfbc"
 	case strings.Contains(fname, "ofx"):
 		fmt.Fprintf(os.Stderr, "Format=Amex\n")
 		return is_amex, "amex"
@@ -371,6 +383,8 @@ func ftypeToEnum(ft string) (int, string) {
 	switch ft {
 	case "wfb":
 		return is_wfb, ft
+	case "wfbc":
+		return is_wfbc, ft
 	case "amex":
 		return is_amex, ft
 	case "cap1":
@@ -401,6 +415,8 @@ func convert(ftype int, fin string, out_file *os.File) {
 		switch ftype {
 		case is_wfb:
 			out = convertWFB(record)
+		case is_wfbc:
+			out = convertWFBCard(record)
 		case is_amex:
 			out = convertAmex(record)
 		case is_cap1:
