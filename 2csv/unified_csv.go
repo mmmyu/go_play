@@ -321,6 +321,26 @@ func convertCap1(record []string) []string {
 	return out
 }
 
+func convertCap1Transactions(record []string) []string {
+	out := make([]string, out_num_fields)
+	out[out_date] = convertDate(record[1])
+	if out[out_date] == "" {
+		return out
+	}
+	debit, err := strconv.ParseFloat(record[6], 32)
+	if err != nil {
+		debit = 0
+	}
+	credit, err := strconv.ParseFloat(record[7], 32)
+	if err != nil {
+		credit = 0
+	}
+	amt := credit - debit
+	out[out_amount] = strconv.FormatFloat(amt, 'f', -1, 32)
+	out[out_desc] = record[4]
+	return out
+}
+
 func convertCiti(record []string) []string {
 	out := make([]string, out_num_fields)
 	out[out_date] = convertDate(record[0])
@@ -344,13 +364,30 @@ func convertChase(record []string) []string {
 	return out
 }
 
+func convertRed(record []string) []string {
+	out := make([]string, out_num_fields)
+	out[out_date] = convertDate(record[0])
+	if out[out_date] == "" {
+		return out
+	}
+	out[out_amount] = record[3]
+	var regex_sep = regexp.MustCompile(" +")
+	splits := regex_sep.Split(record[2], -1)
+	city := splits[len(splits)-2]
+	state := splits[len(splits)-1]
+	out[out_desc] = "Target " + city + " " + state
+	return out
+}
+
 const (
-	is_wfb   = iota
-	is_amex  = iota
-	is_cap1  = iota
-	is_chase = iota
-	is_citi  = iota
-	is_wfbc  = iota
+	is_wfb       = iota // Wells Fargo Checking Account
+	is_amex      = iota // American Express
+	is_cap1      = iota // Capital One
+	is_cap1trans = iota // Captial One Transactions format
+	is_chase     = iota // Chase
+	is_citi      = iota // Citi
+	is_wfbc      = iota // Wells Fargo Credit Card
+	is_red       = iota // Target Red Card
 )
 
 func guessFileType(fname string) (int, string) {
@@ -368,12 +405,18 @@ func guessFileType(fname string) (int, string) {
 	case strings.Contains(fname, "export"):
 		fmt.Fprintf(os.Stderr, "Format=Capital1\n")
 		return is_cap1, "cap1"
+	case strings.Contains(fname, "transactions"):
+		fmt.Fprintf(os.Stderr, "Format=Capital1Trans\n")
+		return is_cap1trans, "cap1t"
 	case strings.Contains(fname, "Activity"):
 		fmt.Fprintf(os.Stderr, "Format=Chase\n")
 		return is_chase, "chase"
 	case regex_citi.MatchString(fname):
 		fmt.Fprintf(os.Stderr, "Format=Citi\n")
 		return is_citi, "citi"
+	case strings.Contains(fname, "download"):
+		fmt.Fprintf(os.Stderr, "Format=TRed\n")
+		return is_red, "tred"
 	default:
 		panic("Unknown file name type")
 	}
@@ -393,6 +436,10 @@ func ftypeToEnum(ft string) (int, string) {
 		return is_chase, ft
 	case "citi":
 		return is_citi, ft
+	case "red":
+		return is_red, ft
+	case "cap1t":
+		return is_cap1trans, ft
 	default:
 		panic("Unknown file type " + ft)
 	}
@@ -421,10 +468,14 @@ func convert(ftype int, fin string, out_file *os.File) {
 			out = convertAmex(record)
 		case is_cap1:
 			out = convertCap1(record)
+		case is_cap1trans:
+			out = convertCap1Transactions(record)
 		case is_citi:
 			out = convertCiti(record)
 		case is_chase:
 			out = convertChase(record)
+		case is_red:
+			out = convertRed(record)
 		default:
 			panic("Unknown file type " + string(ftype))
 		}
