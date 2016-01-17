@@ -343,12 +343,14 @@ func convertCap1Transactions(record []string) []string {
 
 func convertCiti(record []string) []string {
 	out := make([]string, out_num_fields)
-	out[out_date] = convertDate(record[0])
-	amt, err := strconv.ParseFloat(record[1][1:], 32)
-	if err != nil {
-		panic(err)
+	out[out_date] = convertDate(record[1])
+	if out[out_date] == "" {
+		return out
 	}
-	out[out_amount] = strconv.FormatFloat(-amt, 'f', -1, 32)
+	debit, _ := strconv.ParseFloat(record[3], 32)
+	credit, _ := strconv.ParseFloat(record[4], 32)
+	amt := credit - debit
+	out[out_amount] = strconv.FormatFloat(amt, 'f', -1, 32)
 	out[out_desc] = record[2]
 	return out
 }
@@ -391,7 +393,6 @@ const (
 )
 
 func guessFileType(fname string) (int, string) {
-	var regex_citi = regexp.MustCompile("[0-9]{2}-[0-9]{2}-[0-9]{4}.csv")
 	switch {
 	case strings.Contains(fname, "Checking1"):
 		fmt.Fprintf(os.Stderr, "Format=WFB\n")
@@ -405,13 +406,13 @@ func guessFileType(fname string) (int, string) {
 	case strings.Contains(fname, "export"):
 		fmt.Fprintf(os.Stderr, "Format=Capital1\n")
 		return is_cap1, "cap1"
-	case strings.Contains(fname, "transactions"):
+	case strings.Contains(fname, "Transactions"):
 		fmt.Fprintf(os.Stderr, "Format=Capital1Trans\n")
 		return is_cap1trans, "cap1t"
 	case strings.Contains(fname, "Activity"):
 		fmt.Fprintf(os.Stderr, "Format=Chase\n")
 		return is_chase, "chase"
-	case regex_citi.MatchString(fname):
+	case strings.Contains(fname, "CURRENT_VIEW.CSV"):
 		fmt.Fprintf(os.Stderr, "Format=Citi\n")
 		return is_citi, "citi"
 	case strings.Contains(fname, "download"):
