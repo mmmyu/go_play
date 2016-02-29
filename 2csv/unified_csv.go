@@ -100,7 +100,8 @@ func has_string(a, b string) bool {
 func classify_fashion(r []string) {
 	if has_string(r[out_desc], "FOREVER 21") ||
 		has_string(r[out_desc], "6PM.COM") ||
-		has_string(r[out_desc], "VICTORIA'S") {
+		has_string(r[out_desc], "VICTORIA'S") ||
+		has_string(r[out_desc], "EAGLE OUTFTR") {
 		r[out_fashion] = r[out_amount]
 	}
 }
@@ -172,7 +173,7 @@ func classify_target(r []string) {
 
 func classify_utilities(r []string) {
 	if has_string(r[out_desc], "AT&T*BILL") ||
-		has_string(r[out_desc], "OOMAINC") ||
+		has_string(r[out_desc], "OOMA") ||
 		has_string(r[out_desc], "PLEASANTON WATER") ||
 		has_string(r[out_desc], "COMCAST") ||
 		has_string(r[out_desc], "T-MOBILE") {
@@ -351,7 +352,7 @@ func convertCiti(record []string) []string {
 	credit, _ := strconv.ParseFloat(record[4], 32)
 	amt := credit - debit
 	out[out_amount] = strconv.FormatFloat(amt, 'f', -1, 32)
-	out[out_desc] = record[2]
+	out[out_desc] = strings.Trim(record[2], "\n ")
 	return out
 }
 
