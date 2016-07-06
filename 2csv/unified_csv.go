@@ -148,7 +148,8 @@ func classify_walmart(r []string) {
 }
 
 func classify_home_improv(r []string) {
-	if has_string(r[out_desc], "Home Depot") {
+	if has_string(r[out_desc], "Home Depot") ||
+		has_string(r[out_desc], "LOWES") {
 		r[out_home_improv] = r[out_amount]
 	}
 }
@@ -217,7 +218,8 @@ func classify_restaurant(r []string) {
 }
 
 func classify_payment(r []string) {
-	if has_string(r[out_desc], "PAYMENT") {
+	if has_string(r[out_desc], "PAYMENT") ||
+		has_string(r[out_desc], "AUTOPAY") {
 		v, err := strconv.ParseFloat(r[out_amount], 32)
 		if err == nil && v >= 0.0 {
 			r[out_payment] = r[out_amount]
@@ -342,6 +344,18 @@ func convertCap1Transactions(record []string) []string {
 	return out
 }
 
+func convertCitiStmt(record []string) []string {
+	out := make([]string, out_num_fields)
+	out[out_date] = convertDate(record[0])
+	if out[out_date] == "" {
+		return out
+	}
+	amt, _ := strconv.ParseFloat(record[1][1:len(record[1])], 32)
+	out[out_amount] = strconv.FormatFloat(-amt, 'f', -1, 32)
+	out[out_desc] = strings.Trim(record[2], "\n ")
+	return out
+}
+
 func convertCiti(record []string) []string {
 	out := make([]string, out_num_fields)
 	out[out_date] = convertDate(record[1])
@@ -389,11 +403,13 @@ const (
 	is_cap1trans = iota // Captial One Transactions format
 	is_chase     = iota // Chase
 	is_citi      = iota // Citi
+	is_citiStmt  = iota // Citi from statement download page
 	is_wfbc      = iota // Wells Fargo Credit Card
 	is_red       = iota // Target Red Card
 )
 
 func guessFileType(fname string) (int, string) {
+	citi_stmt, _ := regexp.MatchString("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].csv", fname)
 	switch {
 	case strings.Contains(fname, "Checking1"):
 		fmt.Fprintf(os.Stderr, "Format=WFB\n")
@@ -416,6 +432,9 @@ func guessFileType(fname string) (int, string) {
 	case strings.Contains(fname, "CURRENT_VIEW.CSV"):
 		fmt.Fprintf(os.Stderr, "Format=Citi\n")
 		return is_citi, "citi"
+	case citi_stmt:
+		fmt.Fprintf(os.Stderr, "Format=CitiStmt\n")
+		return is_citiStmt, "citistmt"
 	case strings.Contains(fname, "download"):
 		fmt.Fprintf(os.Stderr, "Format=TRed\n")
 		return is_red, "tred"
@@ -474,6 +493,8 @@ func convert(ftype int, fin string, out_file *os.File) {
 			out = convertCap1Transactions(record)
 		case is_citi:
 			out = convertCiti(record)
+		case is_citiStmt:
+			out = convertCitiStmt(record)
 		case is_chase:
 			out = convertChase(record)
 		case is_red:
