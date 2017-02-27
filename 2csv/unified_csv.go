@@ -101,7 +101,8 @@ func classify_fashion(r []string) {
 	if has_string(r[out_desc], "FOREVER 21") ||
 		has_string(r[out_desc], "6PM.COM") ||
 		has_string(r[out_desc], "VICTORIA'S") ||
-		has_string(r[out_desc], "EAGLE OUTFTR") {
+		has_string(r[out_desc], "EAGLE OUTFTR") ||
+		has_string(r[out_desc], "Macys") {
 		r[out_fashion] = r[out_amount]
 	}
 }
@@ -396,6 +397,18 @@ func convertRed(record []string) []string {
 	return out
 }
 
+func convertMacys(record []string) []string {
+	out := make([]string, out_num_fields)
+	out[out_date] = convertDate(record[0])
+	if out[out_date] == "" {
+		return out
+	}
+	amt, _ := strconv.ParseFloat(record[1][1:len(record[1])], 32)
+	out[out_amount] = strconv.FormatFloat(-amt, 'f', -1, 32)
+	out[out_desc] = "Macys " + record[2]
+	return out
+}
+
 const (
 	is_wfb       = iota // Wells Fargo Checking Account
 	is_amex      = iota // American Express
@@ -406,10 +419,12 @@ const (
 	is_citiStmt  = iota // Citi from statement download page
 	is_wfbc      = iota // Wells Fargo Credit Card
 	is_red       = iota // Target Red Card
+	is_macys     = iota // Macy's card
 )
 
 func guessFileType(fname string) (int, string) {
 	citi_stmt, _ := regexp.MatchString("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].csv", fname)
+	macys_stmt, _ := regexp.MatchString("[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].txt", fname)
 	switch {
 	case strings.Contains(fname, "Checking1"):
 		fmt.Fprintf(os.Stderr, "Format=WFB\n")
@@ -438,6 +453,9 @@ func guessFileType(fname string) (int, string) {
 	case strings.Contains(fname, "download"):
 		fmt.Fprintf(os.Stderr, "Format=TRed\n")
 		return is_red, "tred"
+	case macys_stmt:
+		fmt.Fprintf(os.Stderr, "Format=Macys\n")
+		return is_macys, "macys"
 	default:
 		panic("Unknown file name type")
 	}
@@ -461,6 +479,8 @@ func ftypeToEnum(ft string) (int, string) {
 		return is_red, ft
 	case "cap1t":
 		return is_cap1trans, ft
+	case "macys":
+		return is_macys, ft
 	default:
 		panic("Unknown file type " + ft)
 	}
@@ -499,6 +519,8 @@ func convert(ftype int, fin string, out_file *os.File) {
 			out = convertChase(record)
 		case is_red:
 			out = convertRed(record)
+		case is_macys:
+			out = convertMacys(record)
 		default:
 			panic("Unknown file type " + string(ftype))
 		}
