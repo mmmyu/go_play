@@ -115,7 +115,9 @@ func classify_tax_insurance(r []string) {
 
 func classify_mortgage(r []string) {
 	if has_string(r[out_desc], "PROVIDENT FUND") ||
-		has_string(r[out_desc], "CALIBER") {
+		has_string(r[out_desc], "CALIBER") ||
+		has_string(r[out_desc], "Vineyard Village") ||
+		has_string(r[out_desc], "CHASE HOME FINAN") {
 		r[out_mortgage] = r[out_amount]
 	}
 }
@@ -123,13 +125,15 @@ func classify_mortgage(r []string) {
 func classify_school(r []string) {
 	if has_string(r[out_desc], "TAEKWON") ||
 		has_string(r[out_desc], "TIFFANY'S DANCE") ||
+		has_string(r[out_desc], "TIFFANYSDAN") ||
 		has_string(r[out_desc], "HAPPY FISH") {
 		r[out_school] = r[out_amount]
 	}
 }
 
 func classify_drugs(r []string) {
-	if has_string(r[out_desc], "CVS PHARMACY") {
+	if has_string(r[out_desc], "CVS PHARMACY") ||
+		has_string(r[out_desc], "CVS/PHARMACY") {
 		r[out_drugs] = r[out_amount]
 	}
 }
@@ -150,7 +154,9 @@ func classify_walmart(r []string) {
 
 func classify_home_improv(r []string) {
 	if has_string(r[out_desc], "Home Depot") ||
-		has_string(r[out_desc], "LOWES") {
+		has_string(r[out_desc], "LOWES") ||
+		has_string(r[out_desc], "RICHERT LUMBER") ||
+		has_string(r[out_desc], "ORCHARD SUPPLY") {
 		r[out_home_improv] = r[out_amount]
 	}
 }
@@ -178,7 +184,7 @@ func classify_utilities(r []string) {
 		has_string(r[out_desc], "OOMA") ||
 		has_string(r[out_desc], "PLEASANTON WATER") ||
 		has_string(r[out_desc], "COMCAST") ||
-		has_string(r[out_desc], "T-MOBILE") {
+		has_string(r[out_desc], "TMOBILE") {
 		r[out_utilities] = r[out_amount]
 	}
 	if has_string(r[out_desc], "PGANDE") {
@@ -189,7 +195,9 @@ func classify_utilities(r []string) {
 }
 
 func classify_online(r []string) {
-	if has_string(r[out_desc], "netflix.com") {
+	if has_string(r[out_desc], "netflix.com") ||
+		has_string(r[out_desc], "GOOGLE *") ||
+		has_string(r[out_desc], "Audible") {
 		r[out_online] = r[out_amount]
 	}
 }
@@ -199,9 +207,11 @@ func classify_gas(r []string) {
 		has_string(r[out_desc], "Costco gas") ||
 		has_string(r[out_desc], "Union 76") ||
 		has_string(r[out_desc], "76 fuel") ||
+		has_string(r[out_desc], "76 - ") ||
 		has_string(r[out_desc], "SAFEWAY FUEL") ||
 		has_string(r[out_desc], "Shell Oil") ||
-		has_string(r[out_desc], "valero") {
+		has_string(r[out_desc], "valero") ||
+		has_string(r[out_desc], "FASTRAK") {
 		r[out_gas] = r[out_amount]
 	}
 }
@@ -212,8 +222,10 @@ func classify_restaurant(r []string) {
 		has_string(r[out_desc], "Peet") ||
 		has_string(r[out_desc], "SUBWAY") ||
 		has_string(r[out_desc], "JUST KOI") ||
+		has_string(r[out_desc], "YAKITORI") ||
 		has_string(r[out_desc], "CAFE") ||
-		has_string(r[out_desc], "GOLDEN SAND HARBOR") {
+		has_string(r[out_desc], "GOLDEN SAND HARBOR") ||
+		has_string(r[out_desc], "T4") {
 		r[out_restaurant] = r[out_amount]
 	}
 }
@@ -231,6 +243,7 @@ func classify_payment(r []string) {
 func classify_food(r []string) {
 	if has_string(r[out_desc], "99 RANCH") ||
 		has_string(r[out_desc], "FOOD EXPRESS") ||
+		has_string(r[out_desc], "KOI PALACE") ||
 		has_string(r[out_desc], "MARINA") ||
 		has_string(r[out_desc], "RALEY'S") ||
 		has_string(r[out_desc], "TRADER JOE") ||
