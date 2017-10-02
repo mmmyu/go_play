@@ -338,8 +338,11 @@ func convertCap1(record []string) []string {
 	return out
 }
 
+// example.
+// POSTED,08/14/2017,08/16/2017,4760,STARBUCKS STORE 14070,Dining,2.45,
 func convertCap1Transactions(record []string) []string {
 	out := make([]string, out_num_fields)
+	fmt.Fprintf(os.Stderr, "cap1t entry: %s %s %s %s\n", record[1], record[6], record[7], record[4])
 	out[out_date] = convertDate(record[1])
 	if out[out_date] == "" {
 		return out
@@ -438,6 +441,7 @@ const (
 func guessFileType(fname string) (int, string) {
 	citi_stmt, _ := regexp.MatchString("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].csv", fname)
 	macys_stmt, _ := regexp.MatchString("[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].txt", fname)
+	tred_stmt, _ := regexp.MatchString("^download", fname)
 	switch {
 	case strings.Contains(fname, "Checking1"):
 		fmt.Fprintf(os.Stderr, "Format=WFB\n")
@@ -451,6 +455,9 @@ func guessFileType(fname string) (int, string) {
 	case strings.Contains(fname, "export"):
 		fmt.Fprintf(os.Stderr, "Format=Capital1\n")
 		return is_cap1, "cap1"
+	case strings.Contains(fname, "transaction_download"):
+		fmt.Fprintf(os.Stderr, "Format=Capital1Trans\n")
+		return is_cap1trans, "cap1trans"
 	case strings.Contains(fname, "Transactions"):
 		fmt.Fprintf(os.Stderr, "Format=Capital1Trans\n")
 		return is_cap1trans, "cap1t"
@@ -463,7 +470,7 @@ func guessFileType(fname string) (int, string) {
 	case citi_stmt:
 		fmt.Fprintf(os.Stderr, "Format=CitiStmt\n")
 		return is_citiStmt, "citistmt"
-	case strings.Contains(fname, "download"):
+	case tred_stmt:
 		fmt.Fprintf(os.Stderr, "Format=TRed\n")
 		return is_red, "tred"
 	case macys_stmt:
