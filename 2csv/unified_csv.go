@@ -280,26 +280,24 @@ func convertWFB(record []string) []string {
 	}
 	if amt >= 0.0 ||
 		strings.Contains(record[4], " INVESTMENT") ||
+		strings.Contains(record[4], " AUTOINVEST") ||
 		strings.Contains(record[4], "ONLINE TRANSFER") {
 		return out
 	}
-	// Skip credit card autopay entries
-	if strings.HasPrefix(record[4], "CHASE AUTOPAY") ||
-		strings.HasPrefix(record[4], "AMERICAN EXPRESS ACH PMT") ||
+	// Skip credit card and transfers autopay entries
+	if strings.Contains(record[4], "MACYS AUTO") ||
+		strings.Contains(record[4], "CHASE CREDIT CRD") ||
+		strings.Contains(record[4], "TARGET CARD SRVC AUTO") ||
+		strings.Contains(record[4], "AMERICAN EXPRESS ACH PMT") ||
 		strings.HasPrefix(record[4], "CAPITAL ONE CRCARDPMT") ||
-		strings.HasPrefix(record[4], "CITI AUTO PAYMENT") {
+		strings.Contains(record[4], "CITI AUTO PAYMENT") {
 		return out
 	}
-	if !strings.HasPrefix(record[4], "BILL PAY") ||
-		strings.Contains(record[4], "RECURRING") ||
-		strings.Contains(record[4], "LIFEINS") ||
-		strings.Contains(record[4], "CSAA") ||
-		strings.Contains(record[4], "AAA") {
-		out[out_date] = convertDate(record[0])
-		out[out_desc] = record[3] + " " + record[4]
-		out[5] = strconv.FormatFloat(-amt, 'f', -1, 32)
-		out[6] = strconv.FormatFloat(amt, 'f', -1, 32)
-	}
+	out[out_date] = convertDate(record[0])
+	out[out_desc] = record[3] + " " + record[4]
+	out[5] = strconv.FormatFloat(-amt, 'f', -1, 32)
+	out[6] = strconv.FormatFloat(amt, 'f', -1, 32)
+
 	return out
 }
 
