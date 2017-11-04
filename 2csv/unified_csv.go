@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -505,6 +506,20 @@ func ftypeToEnum(ft string) (int, string) {
 	}
 }
 
+type ByDate [][]string
+
+func (s ByDate) Len() int {
+	return len(s)
+}
+
+func (s ByDate) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s ByDate) Less(i, j int) bool {
+	return s[i][out_date] < s[j][out_date]
+}
+
 func convert(ftype int, fin string, out_file *os.File) {
 	fi, err := os.Open(fin)
 	if err != nil {
@@ -548,6 +563,7 @@ func convert(ftype int, fin string, out_file *os.File) {
 			output_records = append(output_records, out)
 		}
 	}
+	sort.Sort(ByDate(output_records))
 	//	fo, err := os.Create(fout)
 	writer := csv.NewWriter(out_file)
 	defer writer.Flush()
