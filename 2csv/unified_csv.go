@@ -342,7 +342,6 @@ func convertCap1(record []string) []string {
 // POSTED,08/14/2017,08/16/2017,4760,STARBUCKS STORE 14070,Dining,2.45,
 func convertCap1Transactions(record []string) []string {
 	out := make([]string, out_num_fields)
-	fmt.Fprintf(os.Stderr, "cap1t entry: %s %s %s %s\n", record[1], record[6], record[7], record[4])
 	out[out_date] = convertDate(record[1])
 	if out[out_date] == "" {
 		return out
@@ -439,7 +438,7 @@ const (
 )
 
 func guessFileType(fname string) (int, string) {
-	citi_stmt, _ := regexp.MatchString("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].csv", fname)
+	citi_stmt, _ := regexp.MatchString("[0-9][0-9][0-9][0-9][-_][0-9][0-9][-_][0-9][0-9].csv", fname)
 	macys_stmt, _ := regexp.MatchString("[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].txt", fname)
 	tred_stmt, _ := regexp.MatchString("^download", fname)
 	switch {
