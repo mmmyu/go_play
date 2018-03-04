@@ -518,7 +518,7 @@ func (s ByDate) Less(i, j int) bool {
 	return s[i][out_date] < s[j][out_date]
 }
 
-func convert(ftype int, fin string, out_file *os.File) {
+func convert(ftype int, fin string) [][]string {
 	fi, err := os.Open(fin)
 	if err != nil {
 		panic(err)
@@ -562,7 +562,10 @@ func convert(ftype int, fin string, out_file *os.File) {
 		}
 	}
 	sort.Sort(ByDate(output_records))
-	//	fo, err := os.Create(fout)
+	return output_records
+}
+
+func writeFile(output_records [][]string, out_file *os.File) {
 	writer := csv.NewWriter(out_file)
 	defer writer.Flush()
 	for _, r := range output_records {
@@ -570,8 +573,8 @@ func convert(ftype int, fin string, out_file *os.File) {
 	}
 }
 
-func getOutputFile(ftype int, ftypename string) *os.File {
-	fname := ftypename + "_" + time.Now().Format("20060102150405") + ".csv"
+func getOutputFile(ftypename string, timestamp string) *os.File {
+	fname := ftypename + "_" + timestamp + ".csv"
 	f, err := os.Create(fname)
 	if err != nil {
 		panic(err)
@@ -598,9 +601,13 @@ func main() {
 		ftype, ftypename = ftypeToEnum(*flag_type)
 	}
 	out_file := os.Stdout
+	output_records := convert(ftype, fname)
+	if len(output_records) == 0 {
+		return
+	}
 	if *flag_output {
-		out_file = getOutputFile(ftype, ftypename)
+		out_file = getOutputFile(ftypename, output_records[0][out_date])
 		defer out_file.Close()
 	}
-	convert(ftype, fname, out_file)
+	writeFile(output_records, out_file)
 }
