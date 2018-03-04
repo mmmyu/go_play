@@ -462,7 +462,7 @@ func guessFileType(fname string) (int, string) {
 	case strings.Contains(fname, "Activity"):
 		fmt.Fprintf(os.Stderr, "Format=Chase\n")
 		return is_chase, "chase"
-	case strings.Contains(fname, "CURRENT_VIEW.CSV"):
+	case strings.Contains(fname, "100_CURRENT_VIEW"):
 		fmt.Fprintf(os.Stderr, "Format=Citi\n")
 		return is_citi, "citi"
 	case citi_stmt:
