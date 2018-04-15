@@ -18,6 +18,18 @@ function one_backup() {
 	      ${from_dir} ${backup_root}/${to_dir}
 }
 
+
+function backup_all() {
+    echo "Backup accounts"
+    one_backup /home/yumf/nas/doc/accounts accounts
+    echo "Backup tax"
+    one_backup /home/yumf/nas/doc/tax tax
+    echo "Backup home"
+    one_backup /home/yumf ssd
+    # echo "Backup photos"
+    # one_backup /misc/yumf_home/photos photos
+}
+
 function restore() {
     local source=$1
     local restore_dir=$2
@@ -27,26 +39,20 @@ function restore() {
 	echo "Restore dir is ${restore_dir}"
 	file_flag="--file-to-restore ${restore_dir}"
     fi
+    if [[ ${source} = "" ]]; then
+	echo "Source is {accounts,tax,ssd,photos}."
+	exit
+    fi
     local restore_target=./restore
     if ! mkdir restore; then
 	echo "./restore dir already exists."
        	exit
     fi
     echo "Restoring from ${source} to ${restore_target}."
-    echo duplicity restore ${file_flag} ${backup_root}/${source} ${restore_target}
+    duplicity restore --gpg-binary=/usr/bin/gpg2 ${file_flag} ${backup_root}/${source} ${restore_target}
 }
 
-if [[ $1 = "restore" ]]; then
-    shift
-    restore $@
-    exit
-fi
-
-echo "Backup accounts"
-one_backup /home/yumf/nas/doc/accounts accounts
-echo "Backup tax"
-one_backup /home/yumf/nas/doc/tax tax
-echo "Backup home"
-one_backup /home/yumf ssd
-# echo "Backup photos"
-# one_backup /misc/yumf_home/photos photos
+case "$1" in
+    restore) shift; restore $@;;
+    "") backup_all;;
+esac
