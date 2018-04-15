@@ -1,0 +1,52 @@
+#!/bin/bash
+
+backup_root=rsync://marco@fatty//volume1/homes/marco/gdrive/backups
+
+function one_backup() {
+    local from_dir=$1
+    local to_dir=$2
+    duplicity --exclude-regexp '\.mozilla' \
+	      --exclude-regexp '\.cache' \
+              --exclude-regexp '\.thumbnails' \
+              --asynchronous-upload \
+	      --encrypt-key 4C4156643ACC79BE8DAC03F054640DB15410E3FE \
+	      --sign-key 4C4156643ACC79BE8DAC03F054640DB15410E3FE \
+	      --full-if-older-than 180D \
+	      --use-agent \
+	      --gpg-binary /usr/bin/gpg2 \
+	      --volsize 1024 \
+	      ${from_dir} ${backup_root}/${to_dir}
+}
+
+function restore() {
+    local source=$1
+    local restore_dir=$2
+
+    local file_flag=
+    if [[ ${restore_dir} != "" ]]; then
+	echo "Restore dir is ${restore_dir}"
+	file_flag="--file-to-restore ${restore_dir}"
+    fi
+    local restore_target=./restore
+    if ! mkdir restore; then
+	echo "./restore dir already exists."
+       	exit
+    fi
+    echo "Restoring from ${source} to ${restore_target}."
+    echo duplicity restore ${file_flag} ${backup_root}/${source} ${restore_target}
+}
+
+if [[ $1 = "restore" ]]; then
+    shift
+    restore $@
+    exit
+fi
+
+echo "Backup accounts"
+one_backup /home/yumf/nas/doc/accounts accounts
+echo "Backup tax"
+one_backup /home/yumf/nas/doc/tax tax
+echo "Backup home"
+one_backup /home/yumf ssd
+# echo "Backup photos"
+# one_backup /misc/yumf_home/photos photos

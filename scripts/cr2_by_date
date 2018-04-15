@@ -1,0 +1,31 @@
+#!/bin/bash
+
+function usage() {
+    echo "$0 <prefix> <.CR2 files>..."
+    exit 3
+}
+
+prefix=$1
+shift
+
+[[ "$prefix" = "" ]] && usage
+
+tmpdir=$(mktemp -d)
+mapfile=$tmpdir/map
+
+dcraw -v -i $@ | \
+    awk '/Filename/{f=$2}/Timestamp/{print f, $2, $3, $4, $5, $6}' | \
+    while read f d; do
+        dir=$(date -d "$d" "+%Y%m%d_$prefix")
+	echo $dir $f >> $mapfile
+    done
+
+echo "Created map file $mapfile" 2>&1
+
+if awk '{print $1}' $mapfile | uniq | xargs mkdir -p; then
+    cat $mapfile | while read d f; do
+        mv ${f}* $d
+	g=${f/.CR2/.JPG}
+	[[ -f ${g} ]] && mv ${g} $d
+    done
+fi
