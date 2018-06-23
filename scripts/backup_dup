@@ -1,6 +1,27 @@
 #!/bin/bash
 
-backup_root=rsync://marco@fatty//volume1/homes/marco/gdrive/backups
+backup_schema=rsync://marco@fatty/
+gpg2_bin=/usr/bin/gpg2
+declare datasets=("ssd /home/yumf")
+dry_run=
+tmpdir=
+encrypt_key=4C4156643ACC79BE8DAC03F054640DB15410E3FE
+
+if [[ "$1" == "syno" ]]; then
+    shift
+    backup_schema=file://
+    gpg2_bin=/bin/gpg2
+    encrypt_key=5410E3FE
+    export PASSPHRASE='just 1 more backup'
+    export TMPDIR=/volume1/extras/tmp
+    declare datasets=(
+	"accounts /volume1/homes/marco/yumf/doc/accounts"
+	"tax /volume1/homes/marco/yumf/doc/tax"
+#	"photo /volume1/homes/marco/photos")
+	)
+fi
+
+backup_root=${backup_schema}/volume1/homes/marco/gdrive/backups
 
 function one_backup() {
     local from_dir=$1
@@ -9,25 +30,24 @@ function one_backup() {
 	      --exclude-regexp '\.cache' \
               --exclude-regexp '\.thumbnails' \
               --asynchronous-upload \
-	      --encrypt-key 4C4156643ACC79BE8DAC03F054640DB15410E3FE \
-	      --sign-key 4C4156643ACC79BE8DAC03F054640DB15410E3FE \
+	      --encrypt-key ${encrypt_key} \
 	      --full-if-older-than 180D \
 	      --use-agent \
-	      --gpg-binary /usr/bin/gpg2 \
+	      --gpg-binary ${gpg2_bin} \
 	      --volsize 1024 \
+	      ${tmpdir} \
+	      ${dry_run} \
 	      ${from_dir} ${backup_root}/${to_dir}
 }
 
 
 function backup_all() {
-    echo "Backup accounts"
-    one_backup /home/yumf/nas/doc/accounts accounts
-    echo "Backup tax"
-    one_backup /home/yumf/nas/doc/tax tax
-    echo "Backup home"
-    one_backup /home/yumf ssd
-    # echo "Backup photos"
-    # one_backup /misc/yumf_home/photos photos
+    for d in "${datasets[@]}"; do
+	echo $d | if read name path; then
+	    echo "Backup ${name}"
+	    one_backup $path $name
+	fi
+    done
 }
 
 function restore() {
@@ -49,7 +69,7 @@ function restore() {
        	exit
     fi
     echo "Restoring from ${source} to ${restore_target}."
-    duplicity restore --gpg-binary=/usr/bin/gpg2 ${file_flag} ${backup_root}/${source} ${restore_target}
+    duplicity restore --gpg-binary=${gpg2_bin} ${file_flag} ${backup_root}/${source} ${restore_target}
 }
 
 case "$1" in
